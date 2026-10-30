@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocal, KEYS, DEFAULT_SETTINGS, EMPTY_ANSWERS, NO_MASTER } from '../lib/store';
 import { GROUPS, getVal, setVal, isEmpty, unanswered, markedUnsure, isSentinel, isUnsure, UNSURE, NA } from '../lib/questions';
 import type { Field } from '../lib/questions';
-import { chatJSON } from '../lib/llm';
+import { chatJSON, needsKey, freeStatus } from '../lib/llm';
+import type { FreeStatus } from '../lib/llm';
 import { SYSTEM, structurePrompt } from '../lib/prompts';
 import { pdfText } from '../lib/ats';
 import type { Answers, MasterResume, Settings } from '../lib/types';
@@ -73,6 +74,10 @@ export function Profile() {
   const [jsonDraft, setJsonDraft] = useState('');
   const [more, setMore] = useState(false);
   const [replacing, setReplacing] = useState(false);
+  const [free, setFree] = useState<FreeStatus | null>(null);
+  const keyMissing = needsKey(settings);
+  useEffect(() => { let alive = true; if (settings.provider === 'free') freeStatus().then((f) => { if (alive) setFree(f); }).catch(() => {}); return () => { alive = false; }; }, [settings.provider]);
+  const freeOff = settings.provider === 'free' && free !== null && !free.configured;
 
   const open = unanswered(answers);
   const unsure = markedUnsure(answers);
@@ -144,10 +149,10 @@ export function Profile() {
   const showResumeInput = !master || replacing;
   return (
     <div>
-      {!settings.apiKey ? (
+      {keyMissing || freeOff ? (
         <div className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-700/60 dark:bg-amber-900/20 dark:text-amber-100">
-          <p className="font-medium">One-time set-up: add a model key (free option available)</p>
-          <p className="mt-1">This app has no server, so reading your resume and writing for you run on a key you own: Google Gemini has a free tier (no card), OpenAI costs about a cent or two per application. Your resume goes only to that provider. <a className="font-medium underline" href="#/settings">Add a key in Settings</a>. You can fill in the answers below meanwhile.</p>
+          <p className="font-medium">{freeOff ? 'Free mode is not set up on this deployment yet' : 'One-time set-up: add a model key'}</p>
+          <p className="mt-1">{freeOff ? 'The site owner has not added the shared key yet. ' : 'You picked a provider that needs your own key. '}Reading your resume and writing for you run on a language model. <a className="font-medium underline" href="#/settings">Open Settings</a>{freeOff ? ' to add your own key (Google Gemini has a free tier, no card).' : ' to add it, or switch to Free.'} You can fill in the answers below meanwhile.</p>
         </div>
       ) : null}
 
@@ -163,8 +168,8 @@ export function Profile() {
               <textarea rows={10} className={input} placeholder="Paste your resume text here..." value={raw} onChange={(e) => setRaw(e.target.value)} />
               <div className="mt-2 flex flex-wrap items-center gap-3">
                 <label className={btnGhost + ' cursor-pointer'}>Upload PDF / TXT<input type="file" accept=".pdf,.txt,.md" className="hidden" onChange={(e) => e.target.files && e.target.files[0] && onFile(e.target.files[0])} /></label>
-                <button className={btn} disabled={!raw.trim() || !!busy || !settings.apiKey} onClick={structure}>{busy || 'Read my resume'}</button>
-                {!settings.apiKey ? <a href="#/settings" className="text-sm text-amber-600 hover:underline">Needs a model key (why?)</a> : null}
+                <button className={btn} disabled={!raw.trim() || !!busy || keyMissing} onClick={structure}>{busy || 'Read my resume'}</button>
+                {keyMissing ? <a href="#/settings" className="text-sm text-amber-600 hover:underline">Needs a model key (why?)</a> : null}
                 {replacing ? <button className={btnGhost} onClick={() => setReplacing(false)}>Keep the current one</button> : null}
               </div>
             </div>

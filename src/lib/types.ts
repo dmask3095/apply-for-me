@@ -66,7 +66,7 @@ export type Kit = {
   dropped?: string[];
 };
 
-export type Provider = 'openai' | 'anthropic' | 'gemini' | 'custom';
+export type Provider = 'free' | 'openai' | 'anthropic' | 'gemini' | 'custom';
 export type Settings = { provider: Provider; apiKey: string; model: string; baseUrl: string };
 
 export type Answers = Record<string, unknown>;

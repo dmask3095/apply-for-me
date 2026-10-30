@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useLocal, KEYS, DEFAULT_SETTINGS, EMPTY_ANSWERS, NO_MASTER, NO_KITS } from '../lib/store';
 import { buildKit } from '../lib/pipeline';
+import { needsKey } from '../lib/llm';
 import type { Answers, Kit, MasterResume, Settings } from '../lib/types';
 import { unanswered } from '../lib/questions';
 import { Section, input, btn, muted } from '../ui';
@@ -38,7 +39,7 @@ export function Apply() {
           <button className={btn} disabled={!!step || (!text.trim() && !url.trim())} onClick={go}>{step ? step + '...' : 'Build my kit'}</button>
           {!master ? <a href="#/profile" className="text-sm text-amber-600 hover:underline">Add your resume first</a> : null}
           {master && missing ? <a href="#/profile" className={'text-sm hover:underline ' + muted}>{missing} profile questions still open (optional)</a> : null}
-          {!settings.apiKey ? <a href="#/settings" className="text-sm text-amber-600 hover:underline">Needs a model key (why?)</a> : null}
+          {needsKey(settings) ? <a href="#/settings" className="text-sm text-amber-600 hover:underline">Needs a model key (why?)</a> : null}
         </div>
         {err ? <p className="mt-3 text-sm text-rose-600">{err}</p> : null}
       </Section>

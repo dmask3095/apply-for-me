@@ -29,9 +29,16 @@ npm run dev
 
 Then open **Settings** and add a key. *Check key & list models* fetches the models your key can use and recommends a cheap, current one (Gemini Flash, an OpenAI "mini", Claude Sonnet); any model that returns JSON works.
 
-### Why do I need an API key?
+### Free mode (default) or your own key
 
-There is no server. Reading your resume, checking fit and writing the letter are done by a language model, and whoever calls the model pays for it. With your own key the browser talks to the provider directly: your resume goes only there, never to whoever hosts this page, and the cost is roughly one to three cents per application (or nothing on Google Gemini's free tier, which needs no card). Everything that is not AI (PDF, ATS check, answer sheet, autofill, tracker) works without a key.
+Reading your resume, checking fit and writing the letter are done by a language model, and whoever calls the model pays for it.
+
+- **Free mode** needs no key and no sign-up. A tiny relay (`api/llm.js`, a Vercel function) holds one shared key on Google's free Gemini tier and enforces a daily cap per visitor plus a shared daily pool, so it can run dry on busy days. Your resume passes through the relay (which stores nothing) to Google, and Google may use free-tier data to improve its products.
+- **Your own key** (OpenAI, Anthropic, Gemini or any OpenAI-compatible endpoint): the browser talks to the provider directly, nothing passes through this site, no cap. *Check key & list models* in Settings fetches the models your key can use and recommends a cheap, current one. Roughly one to three cents per application, or free on Gemini's own free tier.
+
+Everything that is not AI (PDF, ATS check, answer sheet, autofill, tracker) works either way.
+
+**Running your own copy with free mode:** deploy to Vercel and set `GEMINI_API_KEY` in the project's environment variables (free key from aistudio.google.com/apikey). Optional: `FREE_MODEL` (default `gemini-3.5-flash-lite`), `FREE_PER_IP_PER_DAY` (16), `FREE_PER_DAY` (400), `FREE_ALLOWED_ORIGINS` (comma list of site origins), and `UPSTASH_REDIS_REST_URL` + `UPSTASH_REDIS_REST_TOKEN` if you want the caps to survive cold starts. A static mirror (GitHub Pages) can use the relay too: build it with `VITE_FREE_ENDPOINT=https://<your-vercel-app>/api/llm`.
 
 ### Nothing is mandatory
 

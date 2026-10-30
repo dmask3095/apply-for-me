@@ -2,13 +2,34 @@ import type { Provider, Settings } from './types';
 
 // Fallbacks only: Settings lists the provider's live models once a key is entered and recommends one.
 export const MODEL_DEFAULTS: Record<string, string> = {
+  free: '',
   openai: 'gpt-4.1-mini',
   anthropic: 'claude-sonnet-4-5',
   gemini: 'gemini-3.8-flash',
   custom: '',
 };
 
+// Free mode talks to a small relay (api/llm.js on the Vercel deployment) that holds one shared key with daily caps.
+export const FREE_ENDPOINT: string = (import.meta.env.VITE_FREE_ENDPOINT as string | undefined) || 'https://apply-for-me-virid.vercel.app/api/llm';
+export type FreeStatus = { configured: boolean; model: string | null; perVisitorPerDay: number };
+export async function freeStatus(): Promise<FreeStatus> {
+  const res = await fetch(FREE_ENDPOINT, { method: 'GET' });
+  if (!res.ok) throw new Error('The free relay is not reachable right now.');
+  const j = await res.json();
+  return { configured: !!j.configured, model: j.model || null, perVisitorPerDay: Number(j.perVisitorPerDay) || 0 };
+}
+/** True when the chosen provider cannot work until the user pastes a key. */
+export const needsKey = (s: Settings) => s.provider !== 'free' && !s.apiKey.trim();
+
 export const PROVIDER_INFO: Record<Provider, { name: string; keyUrl: string; keyLabel: string; cost: string; privacy: string; placeholder: string }> = {
+  free: {
+    name: 'Free (no key, shared pool)',
+    keyUrl: '',
+    keyLabel: '',
+    cost: 'Costs you nothing. A daily cap per visitor and a shared daily pool; when either runs out, add your own key or try tomorrow.',
+    privacy: "Your resume passes through this site's relay to Google's free Gemini tier. The relay stores nothing; Google may use free-tier data to improve its products. For privacy or unlimited use, pick a provider below and add your own key.",
+    placeholder: '',
+  },
   gemini: {
     name: 'Google Gemini (free tier available)',
     keyUrl: 'https://aistudio.google.com/apikey',
@@ -67,6 +88,7 @@ export function pickDefault(provider: Provider, ids: string[]): string {
 
 /** Ask the provider which chat models this key can use. */
 export async function listModels(settings: Settings): Promise<string[]> {
+  if (settings.provider === 'free') throw new LlmError(0, 'Free mode uses a fixed model; nothing to list.');
   const key = settings.apiKey.trim();
   if (!key) throw new LlmError(0, 'Enter the key first.');
   const base = settings.baseUrl.trim().replace(/\/$/, '');
@@ -121,14 +143,15 @@ export function parseJson(text: string): unknown {
   }
 }
 
-async function readError(res: Response) {
+async function readError(res: Response, relay = false) {
   let msg = res.statusText;
   try {
     const j = await res.json();
-    msg = j?.error?.message || j?.message || JSON.stringify(j).slice(0, 300);
+    msg = (typeof j?.error === 'string' ? j.error : j?.error?.message) || j?.message || JSON.stringify(j).slice(0, 300);
   } catch {
     /* ignore */
   }
+  if (relay) return new LlmError(res.status, msg || `The free relay answered ${res.status}.`);
   if (res.status === 401) msg = 'The API key was rejected (401). Check it in Settings.';
   if (res.status === 402) msg = 'Your provider says you are out of credit (402).';
   if (res.status === 429) msg = 'Rate limited by your provider (429). Wait a moment and retry.';
@@ -136,8 +159,14 @@ async function readError(res: Response) {
 }
 
 export async function chatJSON(settings: Settings, system: string, user: string, maxTokens = 4000): Promise<unknown> {
+  if (settings.provider === 'free') {
+    const res = await fetch(FREE_ENDPOINT, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ system, user, maxTokens }) });
+    if (!res.ok) throw await readError(res, true);
+    const j = await res.json();
+    return parseJson(String(j.text || ''));
+  }
   const key = settings.apiKey.trim();
-  if (!key) throw new LlmError(0, 'Add your API key in Settings first.');
+  if (!key) throw new LlmError(0, 'Add your API key in Settings first (or switch to Free).');
   const model = settings.model.trim() || MODEL_DEFAULTS[settings.provider];
   const base = settings.baseUrl.trim().replace(/\/$/, '');
 

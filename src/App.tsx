@@ -37,7 +37,7 @@ export default function App() {
         </div>
       </header>
       <main className="mx-auto max-w-4xl px-4 py-6">{page}</main>
-      <footer className="mx-auto max-w-4xl px-4 pb-8 text-xs text-zinc-500 dark:text-zinc-400">Open source. Runs entirely in your browser; nothing is stored on a server. The AI steps use a model key you own (free tier available), so your resume goes only to the provider you choose. Facts come only from your resume; you always click Submit.</footer>
+      <footer className="mx-auto max-w-4xl px-4 pb-8 text-xs text-zinc-500 dark:text-zinc-400">Open source. Everything you type stays in your browser. The AI steps run free through a shared relay, or on your own key for privacy and no limits. Facts come only from your resume; you always click Submit.</footer>
     </div>
   );
 }
