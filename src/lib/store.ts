@@ -37,7 +37,7 @@ export function useLocal<T>(key: string, fallback: T): [T, (v: T | ((prev: T) =>
 }
 
 export const KEYS = { master: 'afm.master', answers: 'afm.answers', settings: 'afm.settings', kits: 'afm.kits' };
-export const DEFAULT_SETTINGS: Settings = { provider: 'openai', apiKey: '', model: '', baseUrl: '' };
+export const DEFAULT_SETTINGS: Settings = { provider: 'gemini', apiKey: '', model: '', baseUrl: '' };
 export const EMPTY_ANSWERS: Answers = {};
 export const NO_KITS: Kit[] = [];
 export const NO_MASTER: MasterResume | null = null;

@@ -13,7 +13,12 @@ Everything runs in your browser. Your resume, answers and kits live in `localSto
 
 ## Use it
 
-Hosted: see the link in the repository description (GitHub Pages / Vercel).
+Hosted, no account needed:
+
+- **https://apply-for-me-virid.vercel.app** (Vercel, auto-deploys from `main`)
+- **https://dmask3095.github.io/apply-for-me/** (GitHub Pages mirror)
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/dmask3095/apply-for-me)
 
 Locally:
 
@@ -22,7 +27,15 @@ npm install
 npm run dev
 ```
 
-Then open **Settings** and add a key. Defaults: OpenAI `gpt-4.1-mini`, Anthropic `claude-sonnet-4-5`, Gemini `gemini-2.5-flash`. Any model that can return JSON works; the cheap ones are fine.
+Then open **Settings** and add a key. *Check key & list models* fetches the models your key can use and recommends a cheap, current one (Gemini Flash, an OpenAI "mini", Claude Sonnet); any model that returns JSON works.
+
+### Why do I need an API key?
+
+There is no server. Reading your resume, checking fit and writing the letter are done by a language model, and whoever calls the model pays for it. With your own key the browser talks to the provider directly: your resume goes only there, never to whoever hosts this page, and the cost is roughly one to three cents per application (or nothing on Google Gemini's free tier, which needs no card). Everything that is not AI (PDF, ATS check, answer sheet, autofill, tracker) works without a key.
+
+### Nothing is mandatory
+
+Every profile question can be marked **Not sure yet** or **Not applicable**. The kit never guesses: when a form actually needs one of those answers, the row is flagged *needs you* and says exactly where to find the real answer (EAD card, I-20, transcript, posted pay range, levels.fyi...). Autofill never types a placeholder into a form.
 
 1. **Your profile**: paste your resume text (or drop the PDF) and press *Read my resume*. Answer the short list of questions every form asks.
 2. **Paste a job**: text or link. Press *Build my kit*.

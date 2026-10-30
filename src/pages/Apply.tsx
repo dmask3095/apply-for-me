@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useLocal, KEYS, DEFAULT_SETTINGS, EMPTY_ANSWERS, NO_MASTER, NO_KITS } from '../lib/store';
 import { buildKit } from '../lib/pipeline';
 import type { Answers, Kit, MasterResume, Settings } from '../lib/types';
-import { REQUIRED, getVal, isEmpty } from '../lib/questions';
+import { unanswered } from '../lib/questions';
 import { Section, input, btn, muted } from '../ui';
 
 export function Apply() {
@@ -14,7 +14,7 @@ export function Apply() {
   const [url, setUrl] = useState('');
   const [step, setStep] = useState('');
   const [err, setErr] = useState('');
-  const missing = REQUIRED.filter((f) => isEmpty(getVal(answers, f.k))).length;
+  const missing = unanswered(answers).length;
 
   async function go() {
     if (!master) { window.location.hash = '#/profile'; return; }
@@ -37,8 +37,8 @@ export function Apply() {
         <div className="mt-3 flex flex-wrap items-center gap-3">
           <button className={btn} disabled={!!step || (!text.trim() && !url.trim())} onClick={go}>{step ? step + '...' : 'Build my kit'}</button>
           {!master ? <a href="#/profile" className="text-sm text-amber-600 hover:underline">Add your resume first</a> : null}
-          {master && missing ? <a href="#/profile" className="text-sm text-amber-600 hover:underline">{missing} quick answers still empty</a> : null}
-          {!settings.apiKey ? <a href="#/settings" className="text-sm text-amber-600 hover:underline">Add an API key</a> : null}
+          {master && missing ? <a href="#/profile" className={'text-sm hover:underline ' + muted}>{missing} profile questions still open (optional)</a> : null}
+          {!settings.apiKey ? <a href="#/settings" className="text-sm text-amber-600 hover:underline">Needs a model key (why?)</a> : null}
         </div>
         {err ? <p className="mt-3 text-sm text-rose-600">{err}</p> : null}
       </Section>

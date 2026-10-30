@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocal, KEYS, NO_KITS, EMPTY_ANSWERS } from '../lib/store';
 import type { Answers, Kit } from '../lib/types';
 import type { Fit } from '../lib/pipeline';
@@ -34,6 +34,9 @@ export function KitPage({ id }: { id: string }) {
   }, [kit?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const bm = useMemo(() => bookmarklet(answers), [answers]);
+  // React refuses javascript: URLs in href, so the bookmarklet link is set through the DOM.
+  const bmRef = useRef<HTMLAnchorElement>(null);
+  useEffect(() => { if (bmRef.current) bmRef.current.setAttribute('href', bm); }, [bm, kit?.id]);
   if (!kit) return <p className={muted}>Kit not found.</p>;
   const update = (patch: Partial<FullKit>) => setKits((prev) => prev.map((k) => (k.id === kit.id ? { ...k, ...patch } : k)));
   const fit = kit.fit;
@@ -95,9 +98,10 @@ export function KitPage({ id }: { id: string }) {
         </Section>
       ) : null}
 
-      <Section title="Answers for the form" hint="Every question the form will ask, with your answer. Yellow rows need you. Drag the Autofill button to your bookmarks bar, open the application, click it: the common fields fill themselves.">
+      <Section title="Answers for the form" hint="Every question the form will ask, with your answer. Yellow rows need you: each says where to find the real answer. Drag the Autofill button to your bookmarks bar (or copy its code into a new bookmark's URL), open the application, click it: the common fields fill themselves.">
         <div className="mb-3 flex flex-wrap items-center gap-3">
-          <a className={btnGhost} href={bm} onClick={(e) => e.preventDefault()} title="Drag me to your bookmarks bar">Autofill (drag to bookmarks)</a>
+          <a ref={bmRef} className={btnGhost} onClick={(e) => e.preventDefault()} title="Drag me to your bookmarks bar">Autofill (drag to bookmarks)</a>
+          <Copy text={bm} label="Copy bookmarklet code" />
           <Copy text={allAnswers} label="Copy all answers" />
         </div>
         <table className="w-full text-sm">
@@ -105,7 +109,7 @@ export function KitPage({ id }: { id: string }) {
             {kit.answers.map((a, i) => (
               <tr key={i} className={'border-t border-zinc-200 dark:border-zinc-800 ' + (a.source === 'needs-you' ? 'bg-amber-500/10' : '')}>
                 <td className="w-1/3 py-2 pr-3 align-top font-medium text-zinc-800 dark:text-zinc-200">{a.question}</td>
-                <td className="py-2 pr-3 align-top whitespace-pre-wrap">{a.answer}</td>
+                <td className="py-2 pr-3 align-top whitespace-pre-wrap">{a.source === 'needs-you' ? <span className="mr-1 rounded bg-amber-500/20 px-1.5 py-0.5 text-[11px] font-medium text-amber-800 dark:text-amber-200">needs you</span> : null}{a.answer}</td>
                 <td className="py-2 align-top text-right"><Copy text={a.answer} /></td>
               </tr>
             ))}

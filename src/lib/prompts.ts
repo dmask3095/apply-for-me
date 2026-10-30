@@ -48,7 +48,7 @@ export function tailorPrompt(master: MasterResume, posting: Posting, answersSumm
  "awards": [master award ids worth keeping, max 3],
  "changeLog": [one line per meaningful change: what changed and why, e.g. "Summary: led with Databricks + SQL because the posting lists them as required"],
  "followUpNote": a 2-3 sentence follow-up message to send 5-7 days after applying: states the date placeholder {date}, reiterates interest in the exact role, and names ONE specific thing from the master that matches the posting}
-Rules: never introduce a tool, number, employer, title or date that is not in the master. Use the posting's exact wording for terms the candidate genuinely has (write the acronym and the spelled-out form once if the posting does). Keep every employer; keep education untouched (it is copied from the master).
+Rules: an answer-bank value of "Not sure yet" means unanswered: set that knockout's ok to false and candidate to "Not sure yet", never assume. "Not applicable" means the box is left blank. Never introduce a tool, number, employer, title or date that is not in the master. Use the posting's exact wording for terms the candidate genuinely has (write the acronym and the spelled-out form once if the posting does). Keep every employer; keep education untouched (it is copied from the master).
 
 ANSWER BANK (for knockouts): ${answersSummary}
 
@@ -62,7 +62,7 @@ export function writingPrompt(master: MasterResume, posting: Posting, tone: stri
 {"letter": {"subject": "Application for <title>", "paragraphs": [4 paragraphs, 180-250 words total]},
  "answers": [{"question": string, "answer": string, "source": "bank"|"resume"|"drafted"|"needs-you"}]}
 Letter rules (tone: ${tone}): paragraph 1 names the role and the company's actual problem from the posting in one or two sentences; paragraphs 2-3 connect two concrete things from the master resume (with their real numbers) to the posting's requirements; paragraph 4 states availability from the answer bank and a plain closing. No "I am excited", no flattery, no invented stories. Recruiters reject letters that do not connect experience to the role or that show the posting was not read; write for that reader.
-Answers: for EACH question in the posting's question list, write the answer the candidate would give. Short-answer and "why us / why this role" questions: 60-150 words, specific, from the master and the posting. If a question needs a fact that is not in the master or the answer bank (a personal story, a preference, a number, a date), set source "needs-you" and put a one-line note of what is needed as the answer. Never write "N/A".
+Answers: for EACH question in the posting's question list, write the answer the candidate would give. Short-answer and "why us / why this role" questions: 60-150 words, specific, from the master and the posting. If a question needs a fact that is not in the master or the answer bank (a personal story, a preference, a number, a date), set source "needs-you" and put a one-line note of what is needed and where the candidate can look it up as the answer. If the answer bank says "Not sure yet" for a fact the question needs, that is also "needs-you". Never write "N/A" as an answer to a free-text question.
 Also add rows for any screening question implied by the posting's knockouts, answered from the answer bank (source "bank").
 
 ANSWER BANK: ${answersSummary}

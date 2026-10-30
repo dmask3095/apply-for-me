@@ -1,11 +1,97 @@
-import type { Settings } from './types';
+import type { Provider, Settings } from './types';
 
+// Fallbacks only: Settings lists the provider's live models once a key is entered and recommends one.
 export const MODEL_DEFAULTS: Record<string, string> = {
   openai: 'gpt-4.1-mini',
   anthropic: 'claude-sonnet-4-5',
-  gemini: 'gemini-2.5-flash',
-  custom: 'gpt-4.1-mini',
+  gemini: 'gemini-3.8-flash',
+  custom: '',
 };
+
+export const PROVIDER_INFO: Record<Provider, { name: string; keyUrl: string; keyLabel: string; cost: string; privacy: string; placeholder: string }> = {
+  gemini: {
+    name: 'Google Gemini (free tier available)',
+    keyUrl: 'https://aistudio.google.com/apikey',
+    keyLabel: 'Get a free key at aistudio.google.com/apikey ("Create API key", no card needed)',
+    cost: 'Free tier: Flash and Flash-Lite models cost nothing within a daily cap. Paid keys run a few cents per application.',
+    privacy: 'On the free tier Google may use prompts (your resume included) to improve its products; paid projects are excluded.',
+    placeholder: 'AIza...',
+  },
+  openai: {
+    name: 'OpenAI',
+    keyUrl: 'https://platform.openai.com/api-keys',
+    keyLabel: 'Create a key at platform.openai.com/api-keys (needs a few dollars of prepaid credit)',
+    cost: 'About 1 to 3 cents per application with a "mini" model.',
+    privacy: 'API data is not used for training by default.',
+    placeholder: 'sk-...',
+  },
+  anthropic: {
+    name: 'Anthropic (Claude)',
+    keyUrl: 'https://console.anthropic.com/settings/keys',
+    keyLabel: 'Create a key at console.anthropic.com/settings/keys (prepaid credit)',
+    cost: 'About 3 to 10 cents per application depending on the model.',
+    privacy: 'API data is not used for training by default.',
+    placeholder: 'sk-ant-...',
+  },
+  custom: {
+    name: 'OpenAI-compatible endpoint (OpenRouter, Groq, Ollama...)',
+    keyUrl: 'https://openrouter.ai/keys',
+    keyLabel: 'Any endpoint that speaks the OpenAI chat API. OpenRouter: openrouter.ai/keys (base URL https://openrouter.ai/api/v1). Groq: console.groq.com/keys (https://api.groq.com/openai/v1, free tier). Ollama on your machine: base URL http://localhost:11434/v1, key "ollama".',
+    cost: 'Depends on the endpoint; local models cost nothing.',
+    privacy: 'Depends on the endpoint you choose.',
+    placeholder: 'key',
+  },
+};
+
+function version(id: string): number {
+  const m = id.match(/(\d+(?:\.\d+)?)/);
+  return m ? parseFloat(m[1]) : 0;
+}
+const DATED = /\d{4}-\d{2}-\d{2}|\d{8}/;
+function best(ids: string[], prefer: RegExp[], avoid: RegExp): string {
+  const clean = ids.filter((i) => !avoid.test(i));
+  for (const p of prefer) {
+    const hits = clean.filter((i) => p.test(i));
+    if (hits.length) return hits.sort((a, b) => version(b) - version(a) || (DATED.test(a) ? 1 : 0) - (DATED.test(b) ? 1 : 0) || a.length - b.length)[0];
+  }
+  return clean[0] || ids[0] || '';
+}
+
+/** The model to recommend from a live list: cheap, current, good at JSON. */
+export function pickDefault(provider: Provider, ids: string[]): string {
+  if (!ids.length) return MODEL_DEFAULTS[provider] || '';
+  if (provider === 'gemini') return best(ids, [/flash(?!-lite)/, /flash-lite/, /gemini/], /preview|exp|thinking|live|tts|audio|image|embedding|8b|robotics|computer/);
+  if (provider === 'anthropic') return best(ids, [/sonnet/, /haiku/, /claude/], /opus/);
+  return best(ids, [/^gpt-[\d.]+-mini$/, /mini/, /^gpt-[\d.]+$/, /gpt|llama|qwen|mistral|gemma/], /realtime|audio|tts|transcribe|image|embedding|moderation|search|instruct|whisper|dall-e|codex|computer|nano|preview|chat-latest|pro/);
+}
+
+/** Ask the provider which chat models this key can use. */
+export async function listModels(settings: Settings): Promise<string[]> {
+  const key = settings.apiKey.trim();
+  if (!key) throw new LlmError(0, 'Enter the key first.');
+  const base = settings.baseUrl.trim().replace(/\/$/, '');
+  if (settings.provider === 'anthropic') {
+    const res = await fetch(`${base || 'https://api.anthropic.com'}/v1/models?limit=100`, { headers: { 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' } });
+    if (!res.ok) throw await readError(res);
+    const j = await res.json();
+    return ((j.data || []) as { id: string }[]).map((m) => m.id).filter((id) => /claude/i.test(id));
+  }
+  if (settings.provider === 'gemini') {
+    const res = await fetch(`${base || 'https://generativelanguage.googleapis.com/v1beta'}/models?pageSize=200&key=${encodeURIComponent(key)}`);
+    if (!res.ok) throw await readError(res);
+    const j = await res.json();
+    return ((j.models || []) as { name: string; supportedGenerationMethods?: string[] }[])
+      .filter((m) => !m.supportedGenerationMethods || m.supportedGenerationMethods.includes('generateContent'))
+      .map((m) => m.name.replace(/^models\//, ''))
+      .filter((id) => /gemini|gemma/i.test(id) && !/embedding|tts|image|live|audio|veo|imagen|aqa/i.test(id));
+  }
+  const res = await fetch(`${base || 'https://api.openai.com/v1'}/models`, { headers: { authorization: `Bearer ${key}` } });
+  if (!res.ok) throw await readError(res);
+  const j = await res.json();
+  const ids = ((j.data || []) as { id: string }[]).map((m) => m.id);
+  if (settings.provider === 'openai') return ids.filter((id) => /^(gpt-|o\d|chatgpt)/.test(id) && !/realtime|audio|tts|transcribe|image|embedding|moderation|search|instruct|whisper|dall-e|computer|codex/.test(id)).sort();
+  return ids.sort();
+}
 
 export class LlmError extends Error {
   status: number;

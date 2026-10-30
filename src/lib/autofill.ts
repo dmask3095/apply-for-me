@@ -1,16 +1,16 @@
 // A bookmarklet that fills common application-form fields from the answer bank.
 // It runs on the job page (Greenhouse, Lever, Ashby, Workday, Google Forms...), matching inputs by their labels.
-import { getVal } from './questions';
+import { getVal, isSentinel } from './questions';
 
 export function autofillValues(a: Record<string, unknown>) {
-  const s = (k: string) => { const v = getVal(a, k); return v === undefined || v === null ? '' : Array.isArray(v) ? v.join(', ') : typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v); };
+  const s = (k: string) => { const v = getVal(a, k); return v === undefined || v === null || isSentinel(v) ? '' : Array.isArray(v) ? v.join(', ') : typeof v === 'boolean' ? (v ? 'Yes' : 'No') : String(v); };
   const first = s('legalFirstName'), last = s('legalLastName');
   return {
     first, last, full: [first, s('legalMiddleName'), last].filter(Boolean).join(' '), preferred: s('preferredName') || first,
     email: s('email'), phone: s('phone'), linkedin: s('linkedin'), github: s('github'), website: s('portfolioUrl'),
     street: s('address/street'), city: s('address/city'), state: s('address/state'), zip: s('address/postalCode'), country: s('address/country'),
     location: [s('address/city'), s('address/state')].filter(Boolean).join(', '),
-    authorized: s('workAuthorizedUS'), sponsorship: s('sponsorshipAnswer').startsWith('No') ? 'No' : 'Yes', visa: s('visaStatus'),
+    authorized: s('workAuthorizedUS'), sponsorship: s('sponsorshipAnswer') ? (s('sponsorshipAnswer').startsWith('No') ? 'No' : 'Yes') : '', visa: s('visaStatus'),
     school: s('educationDetails/gradSchool'), degree: s('educationDetails/gradDegree'), major: s('educationDetails/gradMajor'), gpa: s('educationDetails/gradGpa'), gradEnd: s('educationDetails/gradEnd'),
     start: s('startDate'), relocate: s('relocate'), salary: s('salaryFullTimeBase') || s('salaryInternHourly'), howHeard: s('howHeard'),
     gender: s('eeoPolicy').startsWith('Decline') ? 'Decline' : s('gender'), race: s('eeoPolicy').startsWith('Decline') ? 'Decline' : s('raceEthnicity'),

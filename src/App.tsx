@@ -4,9 +4,8 @@ import { Apply } from './pages/Apply';
 import { KitPage } from './pages/Kit';
 import { History } from './pages/History';
 import { Settings } from './pages/Settings';
-import { useLocal, KEYS, NO_MASTER, EMPTY_ANSWERS, NO_KITS } from './lib/store';
-import { REQUIRED, getVal, isEmpty } from './lib/questions';
-import type { Answers, Kit, MasterResume } from './lib/types';
+import { useLocal, KEYS, NO_MASTER, NO_KITS } from './lib/store';
+import type { Kit, MasterResume } from './lib/types';
 
 function useHash() {
   const [h, setH] = useState(window.location.hash || '#/');
@@ -17,9 +16,7 @@ function useHash() {
 export default function App() {
   const hash = useHash();
   const [master] = useLocal<MasterResume | null>(KEYS.master, NO_MASTER);
-  const [answers] = useLocal<Answers>(KEYS.answers, EMPTY_ANSWERS);
   const [kits] = useLocal<Kit[]>(KEYS.kits, NO_KITS);
-  const missing = REQUIRED.filter((f) => isEmpty(getVal(answers, f.k))).length;
   const route = hash.replace(/^#\/?/, '').split('?')[0];
   const page = route.startsWith('kit/') ? <KitPage id={route.slice(4)} /> : route === 'profile' ? <Profile /> : route === 'history' ? <History /> : route === 'settings' ? <Settings /> : master ? <Apply /> : <Profile />;
   const step = (n: number, label: string, done: boolean, href: string, active: boolean) => (
@@ -33,14 +30,14 @@ export default function App() {
       <header className="border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/80">
         <div className="mx-auto flex max-w-4xl flex-wrap items-center gap-2 px-4 py-3">
           <a href="#/" className="mr-2 text-base font-semibold tracking-tight">Apply for me</a>
-          {step(1, 'Your profile', !!master && missing === 0, '#/profile', onProfile)}
+          {step(1, 'Your profile', !!master, '#/profile', onProfile)}
           {step(2, 'Paste a job', false, '#/', route === '' && !!master)}
           {step(3, 'Your kit', kits.length > 0, kits.length ? '#/history' : '#/', route === 'history' || route.startsWith('kit/'))}
           <a href="#/settings" className={'ml-auto text-sm ' + (route === 'settings' ? 'font-medium' : 'text-zinc-500 hover:underline dark:text-zinc-400')}>Settings</a>
         </div>
       </header>
       <main className="mx-auto max-w-4xl px-4 py-6">{page}</main>
-      <footer className="mx-auto max-w-4xl px-4 pb-8 text-xs text-zinc-500 dark:text-zinc-400">Open source. Runs entirely in your browser with your own model key; nothing is stored on a server. Facts come only from your resume; you always click Submit.</footer>
+      <footer className="mx-auto max-w-4xl px-4 pb-8 text-xs text-zinc-500 dark:text-zinc-400">Open source. Runs entirely in your browser; nothing is stored on a server. The AI steps use a model key you own (free tier available), so your resume goes only to the provider you choose. Facts come only from your resume; you always click Submit.</footer>
     </div>
   );
 }

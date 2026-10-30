@@ -12,7 +12,7 @@ export type Fit = { verdict: 'apply' | 'stretch' | 'skip'; reason: string; met: 
 function summarize(a: Answers) {
   const copy: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(a)) if (!['answerLog', 'answeredAt', 'pending'].includes(k)) copy[k] = v;
-  return JSON.stringify(copy).slice(0, 4000);
+  return JSON.stringify(copy).slice(0, 4000) + ' ("Not sure yet" = the candidate has not answered: never assume; "Not applicable" = leave that box blank)';
 }
 
 export async function buildKit(settings: Settings, master: MasterResume, answers: Answers, input: { text?: string; url?: string }, onStep: (s: string) => void): Promise<Kit & { fit: Fit; followUpNote: string }> {
@@ -45,7 +45,7 @@ export async function buildKit(settings: Settings, master: MasterResume, answers
   onStep('Writing the letter and your answers');
   const std = standardAnswers(answers);
   const w = (await chatJSON(settings, SYSTEM, writingPrompt(master, posting, String(answers.coverLetterTone || 'Direct and confident'), summarize(answers), std.map((r) => r.question).join('; ')), 5000)) as { letter?: { subject: string; paragraphs: string[] }; answers?: AnswerRow[] };
-  const rows: AnswerRow[] = [...std.map((r) => ({ ...r, source: 'bank' as const })), ...((w.answers || []).filter((x) => x && x.question && x.answer).map((x) => ({ question: String(x.question), answer: String(x.answer), source: (['bank', 'resume', 'drafted', 'needs-you'].includes(x.source) ? x.source : 'drafted') as AnswerRow['source'] })))];
+  const rows: AnswerRow[] = [...std.map((r) => ({ question: r.question, answer: r.answer, source: r.source })), ...((w.answers || []).filter((x) => x && x.question && x.answer).map((x) => ({ question: String(x.question), answer: String(x.answer), source: (['bank', 'resume', 'drafted', 'needs-you'].includes(x.source) ? x.source : 'drafted') as AnswerRow['source'] })))];
 
   const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
   return {
