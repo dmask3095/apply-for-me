@@ -8,14 +8,28 @@ export const SYSTEM = [
   'Output strict JSON only, no prose, no code fences.',
 ].join(' ');
 
-export function structurePrompt(text: string) {
+// With withAnswers, the same call also lifts the facts application forms ask for (name, contact, links, education,
+// languages, certifications, and work status only when the resume says it in words). Each one is reviewed before it is saved.
+export function structurePrompt(text: string, withAnswers = false) {
+  const answers = withAnswers ? `
+Also add one top-level key "formAnswers": the facts application forms ask for, taken ONLY where this resume states them explicitly. Omit every key the text does not state; never infer, never guess, never fill from the name of a city or school:
+{"firstName", "middleName", "lastName", "email", "phone", "street", "city", "state", "postalCode", "country",
+ "linkedin", "github", "portfolio",
+ "citizenshipCountry" (only if nationality or citizenship is written),
+ "workStatus" (only if written, e.g. "US citizen", "Permanent resident", "F-1 on OPT", "H-1B"),
+ "authorizedToWork": "Yes"|"No" (only if the resume says it in words), "sponsorship": "No"|"Yes, in the future"|"Yes, now" (only if the resume says it in words),
+ "securityClearance": "None"|"Public Trust"|"Secret"|"Top Secret" (only if written),
+ "current": {"school", "degree" (full name as written, e.g. Master of Science), "major", "start": "YYYY-MM", "end": "YYYY-MM" (expected or actual), "gpa" (as written, with its scale), "inProgress": true|false},
+ "previous": {"school", "degree", "major", "end": "YYYY-MM", "gpa"},
+ "languages" (one string, e.g. "English (fluent), Hindi (native)"), "certifications" (one comma-separated string), "dateOfBirth": "YYYY-MM-DD" (only if printed)}
+"current" is the most recent education entry, "previous" the one before it. Dates: "May 2027", "05/2027", "Expected Dec 2026" become "YYYY-MM"; a bare year without a month is omitted.` : '';
   return `Convert this resume text into JSON with EXACTLY this shape (keep every fact, do not add any):
 {"name": string in Title Case, "contact": {"location"?, "phone"?, "email"?, "linkedin"?, "github"?, "portfolio"?},
  "summary": string, "skills": [{"label": string, "items": [string]}],
  "experience": [{"id": "exp1"..., "title", "org", "location"?, "dates", "bullets": [string]}],
  "projects": [{"id": "proj1"..., "name", "tech"?, "link"?, "bullets": [string]}],
  "awards": [{"id": "aw1"..., "text": string}], "education": [{"degree", "school", "dates", "detail"?}], "certifications": [string]}
-Rules: newest first; keep bullet wording as written; ids are sequential strings; empty arrays when a section is absent.
+Rules: newest first; keep bullet wording as written; ids are sequential strings; empty arrays when a section is absent.${answers}
 
 RESUME TEXT:
 ${text.slice(0, 20000)}`;

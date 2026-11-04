@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer } from 'react';
-import type { Answers, Kit, MasterResume, Settings } from './types';
+import type { Answers, AutofillRecord, Kit, MasterResume, Settings } from './types';
 
 const listeners = new Set<() => void>();
 
@@ -36,11 +36,12 @@ export function useLocal<T>(key: string, fallback: T): [T, (v: T | ((prev: T) =>
   return [value, set];
 }
 
-export const KEYS = { master: 'afm.master', answers: 'afm.answers', settings: 'afm.settings', kits: 'afm.kits' };
+export const KEYS = { master: 'afm.master', answers: 'afm.answers', settings: 'afm.settings', kits: 'afm.kits', autofill: 'afm.autofill' };
 export const DEFAULT_SETTINGS: Settings = { provider: 'free', apiKey: '', model: '', baseUrl: '' };
 export const EMPTY_ANSWERS: Answers = {};
 export const NO_KITS: Kit[] = [];
 export const NO_MASTER: MasterResume | null = null;
+export const NO_AUTOFILL: AutofillRecord | null = null;
 
 export function exportAll() {
   return JSON.stringify(

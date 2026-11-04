@@ -5,6 +5,7 @@
 - **Fit check** first: which requirements you meet, which you stretch, which you miss, and the knockout questions (work authorization, degree, location) with your answers, because that is how recruiters actually auto-reject, not resume formatting.
 - **A one-page resume in the job's own words**, built *only* from facts in your stored resume. A fact guard blocks any number, employer, date or tool the model did not get from you. Rendered as real text (Helvetica, single column, standard headings) so every parser reads it, then re-parsed and scored for keyword coverage against the posting.
 - **A cover letter** that connects two things you did to what the team needs. Recruiters expect one and reject on them, so it is written for that reader.
+- **Auto-fill from your resume**: drop the PDF and the facts it states (name, contact, links, education, languages, certifications, work status when it is written) are lifted into the answer bank. You see every value on a checklist before it is saved, nothing is guessed, and one click undoes it.
 - **Every answer the form will ask** (name, address, authorization, sponsorship, school, start date, EEO, plus the posting's own questions), answered from an answer bank you fill once. Anything the model cannot answer truthfully is marked *needs you*, never guessed.
 - **Autofill bookmarklet**: drag it to your bookmarks bar, open the application, click. Common fields on Greenhouse, Lever, Ashby, Workday and friends fill from your answers. You still click Submit.
 - **Follow-up note** for day 6, and a simple tracker (Applied, Heard back, Interview, Offer).
@@ -44,7 +45,7 @@ Everything that is not AI (PDF, ATS check, answer sheet, autofill, tracker) work
 
 Every profile question can be marked **Not sure yet** or **Not applicable**. The kit never guesses: when a form actually needs one of those answers, the row is flagged *needs you* and says exactly where to find the real answer (EAD card, I-20, transcript, posted pay range, levels.fyi...). Autofill never types a placeholder into a form.
 
-1. **Your profile**: paste your resume text (or drop the PDF) and press *Read my resume*. Answer the short list of questions every form asks.
+1. **Your profile**: drop your resume PDF (or paste the text). With *Auto-fill my answers from this resume* on, *Read my resume & fill my answers* structures the resume and lists what it states for the answer bank; tick what to save. Answer whatever is still open in the short list of questions every form asks.
 2. **Paste a job**: text or link. Press *Build my kit*.
 3. **Your kit**: fit check, resume PDF, letter PDF, answers, autofill, follow-up.
 

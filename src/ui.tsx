@@ -22,3 +22,18 @@ export function Copy({ text, label = 'Copy' }: { text: string; label?: string })
     <button className="text-xs font-medium text-emerald-700 hover:underline dark:text-emerald-400" onClick={() => navigator.clipboard.writeText(text).catch(() => {})}>{label}</button>
   );
 }
+
+/** A real switch: filled when on, so it reads as pressable. */
+export function Switch({ on, onChange, label, hint, disabled }: { on: boolean; onChange: (v: boolean) => void; label: string; hint?: string; disabled?: boolean }) {
+  return (
+    <button type="button" role="switch" aria-checked={on} disabled={disabled} onClick={() => onChange(!on)} className="flex items-start gap-3 text-left disabled:cursor-not-allowed disabled:opacity-60">
+      <span className={'relative mt-0.5 inline-flex h-6 w-11 shrink-0 rounded-full transition-colors ' + (on ? 'bg-emerald-600' : 'bg-zinc-300 dark:bg-zinc-700')}>
+        <span className={'absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-[left] ' + (on ? 'left-[22px]' : 'left-0.5')} />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-sm font-medium text-zinc-900 dark:text-zinc-100">{label}</span>
+        {hint ? <span className={'block text-xs ' + muted}>{hint}</span> : null}
+      </span>
+    </button>
+  );
+}

@@ -70,3 +70,6 @@ export type Provider = 'free' | 'openai' | 'anthropic' | 'gemini' | 'custom';
 export type Settings = { provider: Provider; apiKey: string; model: string; baseUrl: string };
 
 export type Answers = Record<string, unknown>;
+
+/** What "Auto-fill my answers from my resume" saved, so it can be put back in one click. */
+export type AutofillRecord = { at: number; file: string; keys: string[]; previous: Record<string, unknown> };
